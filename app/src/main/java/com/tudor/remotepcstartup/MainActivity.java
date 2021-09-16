@@ -12,7 +12,6 @@ public class MainActivity extends AppCompatActivity {
 
     private Button startButton;
     private Button stopButton;
-    private SwitchCompat homeNetworkSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,19 +20,15 @@ public class MainActivity extends AppCompatActivity {
 
 
         startButton = findViewById(R.id.startButton);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                StartPCThread startPCThread = new StartPCThread();
-
-                boolean switchStatus = ((SwitchCompat) findViewById(R.id.homeNetworkSwitch)).isChecked();
-                startPCThread.setHomeNetwork(switchStatus);
-
-                startPCThread.start();
-            }
+        startButton.setOnClickListener(view -> {
+            boolean switchStatus = ((SwitchCompat) findViewById(R.id.homeNetworkSwitch)).isChecked();
+            new StartPCThread().setHomeNetwork(switchStatus).start();
         });
 
         stopButton = findViewById(R.id.stopButton);
-        stopButton.setOnClickListener(view -> new Thread(new StopPCThread()).start());
+        stopButton.setOnClickListener(view -> {
+            boolean switchStatus = ((SwitchCompat) findViewById(R.id.homeNetworkSwitch)).isChecked();
+            new StopPCThread().setHomeNetwork(switchStatus).start();
+        });
     }
 }

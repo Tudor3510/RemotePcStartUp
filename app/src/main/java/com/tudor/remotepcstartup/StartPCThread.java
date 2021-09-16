@@ -10,6 +10,9 @@ import com.jcraft.jsch.Session;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 public class StartPCThread extends Thread{
 
@@ -20,7 +23,8 @@ public class StartPCThread extends Thread{
     private String broadcastAddress;
     private String macAddress;
 
-    private final String settingsLocation = Environment.getExternalStorageDirectory().getPath() + "/" + "RemotePcStartUp/start.settings";
+    private static final String SETTINGS_LOCATION = Environment.getExternalStorageDirectory().getPath() + "/" + "RemotePcStartUp/start.settings";
+    private static final int WOL_PORT = 9;
 
     private boolean homeNetwork = false;
 
@@ -34,10 +38,9 @@ public class StartPCThread extends Thread{
     }
 
     @Override
-    public void run(){
-
+    public void start(){
         try {
-            BufferedReader settingsReader = new BufferedReader((new FileReader(settingsLocation)));
+            BufferedReader settingsReader = new BufferedReader((new FileReader(SETTINGS_LOCATION)));
             DDWRThost = settingsReader.readLine();
             DDWRTport = settingsReader.readLine();
             DDWRTuser = settingsReader.readLine();
@@ -50,9 +53,12 @@ public class StartPCThread extends Thread{
             exception.printStackTrace();
         }
 
-        String command = "/usr/sbin/wol -i " + broadcastAddress + " " + macAddress;
+        super.start();
+    }
 
-        if (homeNetwork) {
+    @Override
+    public void run(){
+        if (!homeNetwork) {
             try {
 
                 java.util.Properties config = new java.util.Properties();
@@ -63,6 +69,7 @@ public class StartPCThread extends Thread{
                 session.setConfig(config);
                 session.connect();
 
+                String command = "/usr/sbin/wol -i " + broadcastAddress + " " + macAddress;
                 Channel channel = session.openChannel("exec");
                 ((ChannelExec) channel).setCommand(command);
                 channel.setInputStream(null);
@@ -75,7 +82,45 @@ public class StartPCThread extends Thread{
             } catch (Exception exception) {
                 exception.printStackTrace();
             }
+        }else{
+
+            try {
+                byte[] macBytes = getMacBytes(macAddress);
+                byte[] bytes = new byte[6 + 16 * macBytes.length];
+                for (int i = 0; i < 6; i++) {
+                    bytes[i] = (byte) 0xff;
+                }
+                for (int i = 6; i < bytes.length; i += macBytes.length) {
+                    System.arraycopy(macBytes, 0, bytes, i, macBytes.length);
+                }
+
+                DatagramPacket packet = new DatagramPacket(bytes, bytes.length, InetAddress.getByName(broadcastAddress), WOL_PORT);
+                DatagramSocket socket = new DatagramSocket();
+                socket.send(packet);
+                socket.close();
+            }
+            catch (Exception exception) {
+                exception.printStackTrace();
+            }
+
         }
 
+    }
+
+    private static byte[] getMacBytes(String macStr) throws IllegalArgumentException {
+        byte[] bytes = new byte[6];
+        String[] hex = macStr.split("(\\:|\\-)");
+        if (hex.length != 6) {
+            throw new IllegalArgumentException("Invalid MAC address.");
+        }
+        try {
+            for (int i = 0; i < 6; i++) {
+                bytes[i] = (byte) Integer.parseInt(hex[i], 16);
+            }
+        }
+        catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid hex digit in MAC address.");
+        }
+        return bytes;
     }
 }

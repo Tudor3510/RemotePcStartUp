@@ -16,37 +16,60 @@ import java.nio.charset.StandardCharsets;
 public class StopPCThread extends Thread{
 
     private String PChost;
+    private String PCexternal;
     private String PCport;
     private String PCuser;
     private String PCpassword;
 
-    private final String settingsLocation = Environment.getExternalStorageDirectory().getPath() + "/" + "RemotePcStartUp/stop.settings";
+    private final String SETTINGS_LOCATION = Environment.getExternalStorageDirectory().getPath() + "/" + "RemotePcStartUp/stop.settings";
+
+    private boolean homeNetwork = false;
+
+    public StopPCThread setHomeNetwork(boolean switchStatus){
+        homeNetwork = switchStatus;
+        return this;
+    }
+
+    public boolean getHomeNetwork(){
+        return homeNetwork;
+    }
 
     @Override
-    public void run() {
-
+    public void start(){
         try {
-            BufferedReader settingsReader = new BufferedReader((new FileReader(settingsLocation)));
+            BufferedReader settingsReader = new BufferedReader((new FileReader(SETTINGS_LOCATION)));
             PChost = settingsReader.readLine();
+            PCexternal = settingsReader.readLine();
             PCport = settingsReader.readLine();
             PCuser = settingsReader.readLine();
             PCpassword = settingsReader.readLine();
+
+            settingsReader.close();
         } catch (IOException exception) {
             exception.printStackTrace();
         }
 
-        String command = "sudo poweroff";
+        super.start();
+    }
+
+    @Override
+    public void run() {
+
 
         try {
-
             java.util.Properties config = new java.util.Properties();
             config.put("StrictHostKeyChecking", "no");
             JSch jsch = new JSch();
-            Session session = jsch.getSession(PCuser, PChost, Integer.parseInt(PCport));
+            Session session;
+            if (!homeNetwork)
+                session = jsch.getSession(PCuser, PCexternal, Integer.parseInt(PCport));
+            else
+                session = jsch.getSession(PCuser, PChost, Integer.parseInt(PCport));
             session.setPassword(PCpassword);
             session.setConfig(config);
             session.connect();
 
+            String command = "sudo poweroff";
             Channel channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
             channel.setInputStream(null);
