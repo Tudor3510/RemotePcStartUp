@@ -4,9 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
-import android.widget.Switch;
 
 public class MainActivity extends AppCompatActivity {
 
