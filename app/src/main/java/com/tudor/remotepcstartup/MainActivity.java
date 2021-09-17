@@ -22,13 +22,13 @@ public class MainActivity extends AppCompatActivity {
         startButton = findViewById(R.id.startButton);
         startButton.setOnClickListener(view -> {
             boolean switchStatus = ((SwitchCompat) findViewById(R.id.homeNetworkSwitch)).isChecked();
-            new StartPCThread().setHomeNetwork(switchStatus).start();
+            new StartPCThread(this).setHomeNetwork(switchStatus).start();
         });
 
         stopButton = findViewById(R.id.stopButton);
         stopButton.setOnClickListener(view -> {
             boolean switchStatus = ((SwitchCompat) findViewById(R.id.homeNetworkSwitch)).isChecked();
-            new StopPCThread().setHomeNetwork(switchStatus).start();
+            new StopPCThread(this).setHomeNetwork(switchStatus).start();
         });
     }
 }

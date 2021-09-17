@@ -1,6 +1,9 @@
 package com.tudor.remotepcstartup;
 
 import android.os.Environment;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -22,11 +25,16 @@ public class StartPCThread extends Thread{
     private String DDWRTpassword;
     private String broadcastAddress;
     private String macAddress;
+    private AppCompatActivity appActivity;
 
     private static final String SETTINGS_LOCATION = Environment.getExternalStorageDirectory().getPath() + "/" + "RemotePcStartUp/start.settings";
     private static final int WOL_PORT = 9;
 
     private boolean homeNetwork = false;
+
+    public StartPCThread(AppCompatActivity appActivity){
+        this.appActivity = appActivity;
+    }
 
     public StartPCThread setHomeNetwork(boolean switchStatus){
         homeNetwork = switchStatus;
@@ -105,11 +113,18 @@ public class StartPCThread extends Thread{
 
         }
 
+        appActivity.runOnUiThread(new Thread(){
+            public void run(){
+                Toast.makeText(appActivity.getApplicationContext(),
+                        "Your PC is waking up",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private static byte[] getMacBytes(String macStr) throws IllegalArgumentException {
         byte[] bytes = new byte[6];
-        String[] hex = macStr.split("(\\:|\\-)");
+        String[] hex = macStr.split("([:\\-])");
         if (hex.length != 6) {
             throw new IllegalArgumentException("Invalid MAC address.");
         }

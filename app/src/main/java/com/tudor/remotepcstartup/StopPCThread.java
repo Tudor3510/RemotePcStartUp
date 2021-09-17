@@ -1,6 +1,9 @@
 package com.tudor.remotepcstartup;
 
 import android.os.Environment;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -11,7 +14,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 
 public class StopPCThread extends Thread{
 
@@ -20,10 +22,15 @@ public class StopPCThread extends Thread{
     private String PCport;
     private String PCuser;
     private String PCpassword;
+    private AppCompatActivity appActivity;
 
     private final String SETTINGS_LOCATION = Environment.getExternalStorageDirectory().getPath() + "/" + "RemotePcStartUp/stop.settings";
 
     private boolean homeNetwork = false;
+
+    public StopPCThread(AppCompatActivity appActivity){
+        this.appActivity = appActivity;
+    }
 
     public StopPCThread setHomeNetwork(boolean switchStatus){
         homeNetwork = switchStatus;
@@ -90,5 +97,14 @@ public class StopPCThread extends Thread{
         } catch (Exception exception) {
             exception.printStackTrace();
         }
+
+
+        appActivity.runOnUiThread(new Thread(){
+            public void run(){
+                Toast.makeText(appActivity.getApplicationContext(),
+                        "Your PC is shutting down",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
